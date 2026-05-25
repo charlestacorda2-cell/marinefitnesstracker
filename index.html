@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marine Elite Master Blueprint</title>
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --card-bg: #161b22;
+            --border-color: #30363d;
+            --text-color: #c9d1d9;
+            --text-bright: #ffffff;
+            --accent-green: #238636;
+            --accent-green-hover: #2ea043;
+            --marine-red: #da3633;
+            --blue-navy: #1f6feb;
+            --blue-swim: #58a6ff;
+            --gold: #f1e05a;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 650px;
+        }
+
+        h1, h2, h3 {
+            text-align: center;
+            color: var(--text-bright);
+        }
+
+        /* TAB CONTROLS */
+        .tab-navigation {
+            display: flex;
+            justify-content: space-between;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 5px;
+            margin-bottom: 20px;
+            position: sticky;
+            top: 10px;
+            z-index: 100;
+        }
+
+        .tab-btn {
+            flex: 1;
+            background: none;
+            border: none;
+            color: var(--text-color);
+            padding: 10px 5px;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .tab-btn.active {
+            background-color: var(--blue-navy);
+            color: var(--text-bright);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* CARDS & LAYOUTS */
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        .habit-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .habit-row:last-child {
+            border-bottom: none;
+        }
+
+        .habit-label {
+            font-size: 14px;
+            font-weight: 500;
+            padding-right: 10px;
+        }
+
+        .btn {
+            background-color: var(--accent-green);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        .btn.done {
+            background-color: var(--border-color);
+            color: #8b949e;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            text-align: center;
+        }
+
+        .stat-box {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            border-radius: 6px;
+        }
+
+        .stat-val {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--blue-navy);
+            margin-top: 5px;
+        }
+
+        .stat-val.streak { color: var(--gold); }
+
+        .progress-container {
+            background-color: var(--bg-color);
+            border-radius: 10px;
+            height: 10px;
+            width: 100%;
+            margin-top: 8px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            background-color: var(--accent-green);
+            height: 100%;
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+
+        /* DYNAMIC TRACKING LISTS */
+        .routine-day {
+            border-left: 3px solid var(--marine-red);
+            padding-left: 12px;
+            margin-top: 15px;
+            margin-bottom: 20px;
+        }
+
+        .routine-day h3 {
+            text-align: left;
+            color: var(--text-bright);
+            margin-bottom: 5px;
+        }
+
+        .interactive-list {
+            list-style: none;
+            padding-left: 0;
+            margin: 0;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .interactive-list li {
+            padding: 10px 8px;
+            border-bottom: 1px dashed var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .interactive-list li:hover {
+            background-color: rgba(255, 255, 255, 0.03);
+        }
+
+        .interactive-list li.item-complete {
+            color: #8b949e;
+            text-decoration: line-through;
+            background-color: transparent;
+        }
+
+        .item-check {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            width: 18px;
+            height: 18px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: transparent;
+        }
+
+        .interactive-list li.item-complete .item-check {
+            background-color: var(--accent-green);
+            border-color: var(--accent-green);
+            color: white;
+        }
+
+        /* SELECTOR GRIDS */
+        .selector-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .triple-selector-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr 0.8fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .time-selector-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        /* FORM MANAGEMENT */
+        .form-group {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group.no-margin {
+            margin-bottom: 0;
+        }
+
+        .form-group label {
+            margin-bottom: 6px;
+            font-weight: bold;
+            font-size: 13px;
+        }
+
+        input, select {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 12px;
+            border-radius: 5px;
+            font-size: 15px;
+        }
+
+        .log-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 13px;
+        }
+
+        .log-table th, .log-table td {
+            border: 1px solid var(--border-color);
+            padding: 8px;
+            text-align: left;
+        }
+
+        .log-table th { background-color: var(--bg-color); }
+
+        .badge {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .badge-sprint { background-color: var(--marine-red); color: white; }
+        .badge-distance { background-color: var(--blue-navy); color: white; }
+        .badge-swim { background-color: var(--blue-swim); color: #0d1117; }
+
+        .objective-box {
+            background-color: rgba(31, 111, 235, 0.1);
+            border-left: 4px solid var(--blue-navy);
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🦅 Semper Fi Engine</h1>
+        
+        <!-- MULTI-TAB NAVIGATION -->
+        <div class="tab-navigation">
+            <button class="tab-btn active" onclick="switchTab('dashboard')">📊 Status</button>
+            <button class="tab-btn" onclick="switchTab('workouts')">🏋️‍♂️ Workouts</button>
+            <button class="tab-btn" onclick="switchTab('diet')">🥩 Diet</button>
+            <button class="tab-btn" onclick="switchTab('run')">🏃‍♂️ Conditioning</button>
+        </div>
+
+        <!-- TAB 1: DASHBOARD STATUS -->
+        <div id="dashboard" class="tab-content active">
+            <div class="card">
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="habit-label">Momentum Streak</div>
+                        <div class="stat-val streak" id="streakDisplay">0 Days</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="habit-label">1-Year Tracker</div>
+                        <div class="stat-val" id="yearProgressPercent">0%</div>
+                        <div class="progress-container">
+                            <div class="progress-bar" id="progressBar"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Daily Blueprint Checklist</h2>
+                <div id="checklistContainer">
+                    <div class="habit-row">
+                        <span class="habit-label">🥞 Sweet-Tooth Breakfast Clean (Oats/Yogurt)</span>
+                        <button class="btn" onclick="toggleHabit(0)" id="habitBtn0">Check Off</button>
+                    </div>
+                    <div class="habit-row">
+                        <span class="habit-label">🥩 Lunch & Snacks Prepped (Hand Portions Hit)</span>
+                        <button class="btn" onclick="toggleHabit(1)" id="habitBtn1">Check Off</button>
+                    </div>
+                    <div class="habit-row">
+                        <span class="habit-label">🏋️‍♂️ Heavy Weight Session Executed</span>
+                        <button class="btn" onclick="toggleHabit(2)" id="habitBtn2">Check Off</button>
+                    </div>
+                    <div class="habit-row">
+                        <span class="habit-label">🌊 Tactical Conditioning Session Executed</span>
+                        <button class="btn" onclick="toggleHabit(3)" id="habitBtn3">Check Off</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: DYNAMIC 1-YEAR WORKOUT SYSTEM -->
+        <div id="workouts" class="tab-content">
+            <div class="card">
+                <h2>Interactive Workout Protocol</h2>
+                <p style="color:#8b949e; font-size:13px; margin-top:-10px; margin-bottom:15px;">Set your timeline targets. Active functional conditioning engines have replaced structural recovery gaps.</p>
+                
+                <div class="selector-grid">
+                    <div class="form-group">
+                        <label for="workoutWeek">Timeline Week</label>
+                        <select id="workoutWeek" onchange="renderDynamicWorkout()"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="workoutDay">Training Block</label>
+                        <select id="workoutDay" onchange="renderDynamicWorkout()">
+                            <option value="1">Day 1: Chest & Triceps</option>
+                            <option value="2">Day 2: Back & Biceps</option>
+                            <option value="3">Day 3: Shoulders & Abs</option>
+                            <option value="4">Day 4: Legs / Power</option>
+                            <option value="5">Day 5: Aerobic Engine (LISS / Swim)</option>
+                            <option value="6">Day 6: Anaerobic Power (HIIT / Sprints)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="routine-day" id="workoutDisplayContainer">
+                    <!-- Loaded dynamically via JavaScript engine -->
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: DYNAMIC 1-YEAR DIET PROTOCOLS -->
+        <div id="diet" class="tab-content">
+            <div class="card">
+                <h2>2-Week Lean Bulk Architecture</h2>
+                
+                <div class="selector-grid">
+                    <div class="form-group">
+                        <label for="dietWeek">Timeline Week</label>
+                        <select id="dietWeek" onchange="renderDynamicDiet()"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="dietDay">Rotation Day</label>
+                        <select id="dietDay" onchange="renderDynamicDiet()">
+                            <option value="1">Day 1 (Rotation Profile A)</option>
+                            <option value="2">Day 2 (Rotation Profile B)</option>
+                            <option value="3">Day 3 (Rotation Profile C)</option>
+                            <option value="4">Day 4 (Rotation Profile A)</option>
+                            <option value="5">Day 5 (Rotation Profile B)</option>
+                            <option value="6">Day 6 (Rotation Profile C)</option>
+                            <option value="7">Day 7 (Clean Refuel Strategy)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="dietDisplayContainer">
+                    <!-- Loaded dynamically via JavaScript engine -->
+                </div>
+
+                <div class="routine-day" style="border-left-color: var(--gold);">
+                    <h3>Sweet-Tooth Optimization Protocols</h3>
+                    <ul style="list-style:none; padding-left:0; line-height:1.6; font-size:14px;">
+                        <li>🍯 <strong>The Protein Pudding:</strong> Mix sweet powder flavors into overnight oats.</li>
+                        <li>🍂 <strong>Stevia & Cinnamon:</strong> 0-Calorie sweetener layout for hot instant oats.</li>
+                        <li>🍁 <strong>Sugar-Free Syrups:</strong> Log Cabin/Mrs. Butterworths sugar-free options.</li>
+                        <li>🍏 <strong>Apple Crunch upgrade:</strong> Slice apple + 1.5 tbsp clean Natural Peanut butter + Cinnamon dust. *(No Caramel Dips).*</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: RUN, SWIM & SPRINTS LOG WITH UNIT & TIME ENGINES -->
+        <div id="run" class="tab-content">
+            <div class="card">
+                <h2>Tactical Conditioning Log</h2>
+                
+                <div class="objective-box" id="dynamicObjectiveBox"></div>
+
+                <div class="form-group">
+                    <label for="runWeek">Current Week</label>
+                    <select id="runWeek"></select>
+                </div>
+
+                <!-- VOLUME CONFIGURATION ROW -->
+                <div class="triple-selector-grid">
+                    <div class="form-group no-margin">
+                        <label for="runType">Modality</label>
+                        <select id="runType" onchange="adjustConditioningLabels()">
+                            <option value="Long Distance">Long Distance</option>
+                            <option value="Sprints / HIIT">Sprints / HIIT</option>
+                            <option value="Swimming">Swimming</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group no-margin">
+                        <label id="distanceLabel" for="runDistance">Performance Value</label>
+                        <input type="number" id="runDistance" step="0.01" min="0" placeholder="e.g. 3.00">
+                    </div>
+
+                    <div class="form-group no-margin">
+                        <label for="runUnit">Metric Unit</label>
+                        <select id="runUnit">
+                            <option value="Miles">Miles</option>
+                            <option value="Laps">Laps</option>
+                            <option value="Meters">Meters</option>
+                            <option value="Yards">Yards</option>
+                            <option value="Feet">Feet</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- NEW DURATION TIME INPUT ROW -->
+                <label style="display:block; margin-bottom:6px; font-weight:bold; font-size:13px;">Performance Duration Time</label>
+                <div class="time-selector-grid">
+                    <div class="form-group no-margin">
+                        <input type="number" id="runHours" min="0" max="99" placeholder="Hrs">
+                    </div>
+                    <div class="form-group no-margin">
+                        <input type="number" id="runMinutes" min="0" max="59" placeholder="Min">
+                    </div>
+                    <div class="form-group no-margin">
+                        <input type="number" id="runSeconds" min="0" max="59" placeholder="Sec">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="runNotes">Performance Log Notes</label>
+                    <input type="text" id="runNotes" placeholder="e.g. Splits felt consistent, strong breathing recovery at walls">
+                </div>
+
+                <button class="btn" style="width:100%; padding:14px; font-size:16px;" onclick="logRun()">Submit & Save Track Session</button>
+
+                <h3>Yearly Conditioning History Engine</h3>
+                <div style="overflow-x: auto;">
+                    <table class="log-table">
+                        <thead>
+                            <tr>
+                                <th>Timeline</th>
+                                <th>Modality</th>
+                                <th>Volume & Time</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody id="runLogBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const masterWorkouts = {
+            "1": { title: "Chest & Triceps", exercises: [
+                "🏋️‍♂️ <strong>Barbell Bench Press:</strong> 4 Sets x 6-8 Reps",
+                "📐 <strong>Incline Dumbbell Press:</strong> 3 Sets x 8-10 Reps",
+                "🦅 <strong>Cable Chest Flies / Pec Dec:</strong> 3 Sets x 12 Reps",
+                "💪 <strong>Tricep Overhead DB Extension:</strong> 3 Sets x 10 Reps",
+                "⚓ <strong>Tricep Cable Rope Pushdowns:</strong> 3 Sets x 12-15 Reps"
+            ]},
+            "2": { title: "Back & Biceps", exercises: [
+                "💀 <strong>Deadlifts or Rack Pulls:</strong> 3 Sets x 5 Reps",
+                "🛶 <strong>Barbell or Dumbbell Rows:</strong> 3 Sets x 8 Reps",
+                "👑 <strong>Lat Pulldowns or Pull-ups:</strong> 4 Sets x 8-10 Reps",
+                "⚡ <strong>Barbell Bicep Curls:</strong> 3 Sets x 8-10 Reps",
+                "🔨 <strong>Dumbbell Hammer Curls:</strong> 3 Sets x 12 Reps"
+            ]},
+            "3": { title: "Shoulders & Abs", exercises: [
+                "🚀 <strong>Overhead Barbell Press (OHP):</strong> 4 Sets x 6 Reps",
+                "✈️ <strong>Dumbbell Lateral Raises:</strong> 4 Sets x 12-15 Reps",
+                "💥 <strong>Rear Delt Reverse Flies:</strong> 3 Sets x 15 Reps",
+                "🧱 <strong>Weighted Cable Crunches:</strong> 3 Sets x 15 Reps",
+                "🧗‍♂️ <strong>Hanging Leg Raises:</strong> 3 Sets x Failure"
+            ]},
+            "4": { title: "Legs / Lower Body Power", exercises: [
+                "🛡️ <strong>Barbell Back Squats:</strong> 4 Sets x 6-8 Reps",
+                "🎯 <strong>Romanian Deadlifts (RDLs):</strong> 3 Sets x 8-10 Reps",
+                "⚙️ <strong>Leg Press:</strong> 3 Sets x 10-12 Reps",
+                "🔄 <strong>Seated Leg Curls:</strong> 3 Sets x 12 Reps",
+                "🔔 <strong>Standing Calf Raises:</strong> 4 Sets x 15 Reps"
+            ]},
+            "5": { title: "Aerobic Engine (LISS / Swim)", exercises: [
+                "🏃‍♂️ <strong>Zone 2 Base Run:</strong> 30-45 Mins steady baseline output OR...",
+                "🌊 <strong>Continuous Swim Engine:</strong> 500-1000 meters focus on technique",
+                "🎒 <strong>Tactical Alternative:</strong> 3-5 Mile weighted pack ruck pacing",
+                "🧘‍♂️ <strong>Ankle & Shoulder Mobility:</strong> 10 Mins structural stretch protocol"
+            ]},
+            "6": { title: "Anaerobic Power & Aquatic Drills", exercises: [
+                "⚡ <strong>Track Sprints:</strong> 8-10 Rounds x 100m or 200m max velocity output",
+                "🏊‍♂️ <strong>Pool Interval Sprints:</strong> 10 Rounds x 50-meter max speed splits",
+                "🧱 <strong>Core Stabilizer Core:</strong> Planks, hanging twists, and heavy flutter kicks",
+                "🔄 <strong>Active Decompression:</strong> 5 Mins slow walk or light treading water"
+            ]}
+        };
+
+        const masterDiets = {
+            "A": { title: "Rotation Profile A", meals: [
+                "🥞 <strong>Breakfast Choice:</strong> Sweet Protein Oats / Berry Greek Yogurt Blueprint",
+                "🥩 <strong>Lunch Strategy:</strong> Clean Chicken Breast, Baked White Potatoes, Broccoli Block",
+                "🥜 <strong>Midday Snack:</strong> Hand portion Shake, Apple slices, 1.5 Tbsp Natural Peanut Butter",
+                "🥩 <strong>Dinner Protocol:</strong> Lean Sirloin or Lean Ground Beef, Quinoa Core, Tossed Greens"
+            ]},
+            "B": { title: "Rotation Profile B", meals: [
+                "🥞 <strong>Breakfast Choice:</strong> Sweet Protein Oats / Berry Greek Yogurt Blueprint",
+                "🥩 <strong>Lunch Strategy:</strong> Clean Chicken Breast, Fluffy Quinoa, Roasted Asparagus Rows",
+                "🥜 <strong>Midday Snack:</strong> Hand portion Shake, Apple slices, 1.5 Tbsp Natural Peanut Butter",
+                "🐟 <strong>Dinner Protocol:</strong> Seared Salmon or White Fish, Baked Sweet Potato, Crisp Green Beans"
+            ]},
+            "C": { title: "Rotation Profile C", meals: [
+                "🥞 <strong>Breakfast Choice:</strong> Sweet Protein Oats / Berry Greek Yogurt Blueprint",
+                "🍝 <strong>Lunch Strategy:</strong> Clean Chicken Breast, High-Protein Chickpea Pasta, Classic Marinara",
+                "🥜 <strong>Midday Snack:</strong> Hand portion Shake, Apple slices, 1.5 Tbsp Natural Peanut Butter",
+                "🦃 <strong>Dinner Protocol:</strong> Thick Lean Pork Loin or Extra-Lean Turkey Burgers, Red Potatoes, Steamed Spinach"
+            ]},
+            "Refuel": { title: "Clean Refuel Strategy (Sunday Target)", meals: [
+                "🥞 <strong>Breakfast Choice:</strong> Sweet Protein Oats Double Serving Baseline",
+                "🥩 <strong>Lunch Strategy:</strong> Lean Turkey or Chicken Breast Roast, Large Jasmine Rice Bowl",
+                "🍿 <strong>Snack Hack:</strong> Low-fat Air popped popcorn or Rice Cakes with Honey dusting",
+                "🥩 <strong>Dinner Protocol:</strong> Extra Large Sirloin Steak, Twin Sweet Potatoes, Mixed Veggie Medley"
+            ]}
+        };
+
+        let appState = {
+            streak: 0,
+            totalDaysTracked: 0,
+            lastLoggedDateString: null,
+            dailyChecklistState: [false, false, false, false],
+            completedExercises: {}, 
+            completedMeals: {},
+            cardioHistory: []
+        };
+
+        window.onload = function() {
+            populateWeekDropdowns();
+            const dataStored = localStorage.getItem('marineUltimateMasterTrackerDataV8');
+            if (dataStored) {
+                appState = JSON.parse(dataStored);
+            }
+            evaluateDateReset();
+            renderUI();
+            renderDynamicWorkout();
+            renderDynamicDiet();
+            adjustConditioningLabels();
+        };
+
+        function populateWeekDropdowns() {
+            const selectors = ['workoutWeek', 'dietWeek', 'runWeek'];
+            selectors.forEach(id => {
+                const selectElement = document.getElementById(id);
+                for (let w = 1; w <= 52; w++) {
+                    let opt = document.createElement('option');
+                    opt.value = w;
+                    opt.innerText = `Week ${w}`;
+                    selectElement.appendChild(opt);
+                }
+            });
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            if (event && event.currentTarget) {
+                event.currentTarget.classList.add('active');
+            }
+        }
+
+        function adjustConditioningLabels() {
+            const currentModality = document.getElementById('runType').value;
+            const distanceLabel = document.getElementById('distanceLabel');
+            const distanceInput = document.getElementById('runDistance');
+            const unitSelector = document.getElementById('runUnit');
+
+            if (currentModality === "Swimming") {
+                distanceLabel.innerText = "Pool Volume";
+                distanceInput.placeholder = "e.g. 40, 500";
+                unitSelector.value = "Laps";
+            } else if (currentModality === "Sprints / HIIT") {
+                distanceLabel.innerText = "Sprint Vol.";
+                distanceInput.placeholder = "e.g. 400, 200";
+                unitSelector.value = "Meters";
+            } else {
+                distanceLabel.innerText = "Distance Vol.";
+                distanceInput.placeholder = "e.g. 3.00, 5.00";
+                unitSelector.value = "Miles";
+            }
+        }
+
+        function renderDynamicWorkout() {
+            const chosenWeek = document.getElementById('workoutWeek').value;
+            const chosenDay = document.getElementById('workoutDay').value;
+            const targetData = masterWorkouts[chosenDay];
+            const container = document.getElementById('workoutDisplayContainer');
+
+            let innerHTML = `<h3>Week ${chosenWeek}, Day ${chosenDay}: ${targetData.title}</h3><ul class="interactive-list">`;
+            
+            targetData.exercises.forEach((exText, index) => {
+                const uniqueKey = `w${chosenWeek}_d${chosenDay}_ex${index}`;
+                const completeClass = appState.completedExercises[uniqueKey] ? 'item-complete' : '';
+                innerHTML += `
+                    <li id="${uniqueKey}" class="${completeClass}" onclick="toggleDynamicExercise('${uniqueKey}')">
+                        <span>${exText}</span> <div class="item-check">✓</div>
+                    </li>`;
+            });
+            
+            innerHTML += `</ul>`;
+            container.innerHTML = innerHTML;
+        }
+
+        function toggleDynamicExercise(uniqueKey) {
+            appState.completedExercises[uniqueKey] = !appState.completedExercises[uniqueKey];
+            persistData();
+            
+            const el = document.getElementById(uniqueKey);
+            if(appState.completedExercises[uniqueKey]) el.classList.add('item-complete');
+            else el.classList.remove('item-complete');
+        }
+
+        function renderDynamicDiet() {
+            const chosenWeek = document.getElementById('dietWeek').value;
+            const chosenDay = document.getElementById('dietDay').value;
+            const container = document.getElementById('dietDisplayContainer');
+            
+            let rotationLetter = "A";
+            if (chosenDay == "2" || chosenDay == "5") rotationLetter = "B";
+            if (chosenDay == "3" || chosenDay == "6") rotationLetter = "C";
+            if (chosenDay == "7") rotationLetter = "Refuel";
+
+            const targetData = masterDiets[rotationLetter];
+            
+            let innerHTML = `
+                <div class="routine-day" style="border-left-color: var(--blue-navy);">
+                    <h3>Week ${chosenWeek}, Day ${chosenDay}: ${targetData.title}</h3>
+                    <p style="color:#8b949e; font-size:12px; margin-top:-5px; margin-bottom:10px;">Tap meals once eaten to check them off for today.</p>
+                    <ul class="interactive-list">`;
+            
+            targetData.meals.forEach((mealText, index) => {
+                const uniqueKey = `w${chosenWeek}_d${chosenDay}_diet${index}`;
+                const completeClass = appState.completedMeals[uniqueKey] ? 'item-complete' : '';
+                innerHTML += `
+                    <li id="${uniqueKey}" class="${completeClass}" onclick="toggleDynamicMeal('${uniqueKey}')">
+                        <span>${mealText}</span> <div class="item-check">✓</div>
+                    </li>`;
+            });
+
+            innerHTML += `</ul></div>`;
+            container.innerHTML = innerHTML;
+        }
+
+        function toggleDynamicMeal(uniqueKey) {
+            appState.completedMeals[uniqueKey] = !appState.completedMeals[uniqueKey];
+            persistData();
+            
+            const el = document.getElementById(uniqueKey);
+            if(appState.completedMeals[uniqueKey]) el.classList.add('item-complete');
+            else el.classList.remove('item-complete');
+        }
+
+        function evaluateDateReset() {
+            const calendarToday = new Date().toDateString();
+            if (appState.lastLoggedDateString !== calendarToday) {
+                if (appState.dailyChecklistState.some(item => item === true)) {
+                    appState.totalDaysTracked = Math.min(365, appState.totalDaysTracked + 1);
+                }
+                appState.dailyChecklistState = [false, false, false, false];
+                appState.lastLoggedDateString = calendarToday;
+                persistData();
+            }
+        }
+
+        function toggleHabit(index) {
+            appState.dailyChecklistState[index] = !appState.dailyChecklistState[index];
+            const perfectDay = appState.dailyChecklistState.every(flag => flag === true);
+            if (perfectDay) {
+                appState.streak += 1;
+            } else if (appState.dailyChecklistState[index] === false && appState.streak > 0) {
+                const nutritionDone = appState.dailyChecklistState[0] && appState.dailyChecklistState[1];
+                const physicalDone = appState.dailyChecklistState[2] || appState.dailyChecklistState[3];
+                if (!nutritionDone || !physicalDone) {
+                     appState.streak = Math.max(0, appState.streak - 1);
+                }
+            }
+            persistData();
+            renderUI();
+        }
+
+        function logRun() {
+            const currentWeek = document.getElementById('runWeek').value;
+            const selectedStyle = document.getElementById('runType').value;
+            const numericDistance = parseFloat(document.getElementById('runDistance').value);
+            const selectedUnit = document.getElementById('runUnit').value;
+            
+            // Capture time parameters securely
+            const hrsInput = parseInt(document.getElementById('runHours').value) || 0;
+            const minInput = parseInt(document.getElementById('runMinutes').value) || 0;
+            const secInput = parseInt(document.getElementById('runSeconds').value) || 0;
+
+            const userNotes = document.getElementById('runNotes').value || "Completed without notes.";
+            const formatLocalDate = new Date().toLocaleDateString();
+
+            if (isNaN(numericDistance) || numericDistance <= 0) {
+                alert("Please submit a valid structural performance value.");
+                return;
+            }
+
+            // String processing to keep digital clock uniform (e.g., 04:05:09)
+            const pad = (num) => String(num).padStart(2, '0');
+            const formattedDuration = `${pad(hrsInput)}:${pad(minInput)}:${pad(secInput)}`;
+
+            const inputPayload = {
+                timeline: `Week ${currentWeek}`,
+                date: formatLocalDate,
+                type: selectedStyle,
+                distance: numericDistance,
+                unit: selectedUnit,
+                duration: formattedDuration,
+                notes: userNotes
+            };
+
+            appState.cardioHistory.unshift(inputPayload);
+            appState.dailyChecklistState[3] = true; 
+
+            // Form Reset Procedures
+            document.getElementById('runDistance').value = '';
+            document.getElementById('runHours').value = '';
+            document.getElementById('runMinutes').value = '';
+            document.getElementById('runSeconds').value = '';
+            document.getElementById('runNotes').value = '';
+
+            persistData();
+            renderUI();
+        }
+
+        function renderUI() {
+            document.getElementById('streakDisplay').innerText = `${appState.streak} Days`;
+            const completionPercentage = Math.round((appState.totalDaysTracked / 365) * 100);
+            document.getElementById('yearProgressPercent').innerText = `${completionPercentage}%`;
+            document.getElementById('progressBar').style.width = `${completionPercentage}%`;
+
+            appState.dailyChecklistState.forEach((isDone, index) => {
+                const targetBtn = document.getElementById(`habitBtn${index}`);
+                if (targetBtn) {
+                    if (isDone) {
+                        targetBtn.innerText = "Verified ✓";
+                        targetBtn.classList.add('done');
+                    } else {
+                        targetBtn.innerText = "Check Off";
+                        targetBtn.classList.remove('done');
+                    }
+                }
+            });
+
+            const logTableBody = document.getElementById('runLogBody');
+            logTableBody.innerHTML = '';
+
+            if (appState.cardioHistory.length === 0) {
+                logTableBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#8b949e;">No logged history found. Dominate the track or the pool!</td></tr>`;
+            } else {
+                appState.cardioHistory.forEach(session => {
+                    let dynamicBadge = 'badge-distance';
+                    let renderedUnit = session.unit ? session.unit : (session.type === 'Swimming' ? 'Units' : 'mi');
+                    let renderedTime = session.duration ? session.duration : '--:--:--';
+
+                    if (session.type === 'Sprints / HIIT') {
+                        dynamicBadge = 'badge-sprint';
+                    } else if (session.type === 'Swimming') {
+                        dynamicBadge = 'badge-swim';
+                    }
+
+                    logTableBody.innerHTML += `
+                        <tr>
+                            <td><strong>${session.timeline}</strong><br><span style="font-size:10px; color:#8b949e;">${session.date}</span></td>
+                            <td><span class="badge ${dynamicBadge}">${session.type}</span></td>
+                            <td>
+                                <strong>${session.distance} ${renderedUnit}</strong><br>
+                                <span style="font-size:11px; color:#58a6ff; font-family:monospace;">⏱️ ${renderedTime}</span>
+                            </td>
+                            <td>${session.notes}</td>
+                        </tr>
+                    `;
+                });
+            }
+            evaluateCardioMilestoneSystem();
+        }
+
+        function evaluateCardioMilestoneSystem() {
+            const responseBox = document.getElementById('dynamicObjectiveBox');
+            if (appState.cardioHistory.length === 0) {
+                responseBox.innerHTML = `<strong>Operational Rank: Base Recruit</strong><br>Daily structural engine active. Execute conditioning blocks or dive into the water to start unlocking operational performance assessments.`;
+                responseBox.style.borderLeftColor = "var(--blue-navy)";
+                responseBox.style.backgroundColor = "rgba(31, 111, 235, 0.1)";
+                return;
+            }
+
+            const runningMiles = appState.cardioHistory
+                .filter(item => item.type !== 'Swimming' && (!item.unit || item.unit === 'Miles'))
+                .map(item => item.distance);
+                
+            const absolutePeakDistance = runningMiles.length > 0 ? Math.max(...runningMiles) : 0;
+            const hasSwam = appState.cardioHistory.some(item => item.type === 'Swimming');
+
+            let waterNote = hasSwam ? " Amphibious operations logged in your active files." : "";
+
+            if (absolutePeakDistance < 3.0) {
+                responseBox.innerHTML = `<strong>Operational Rank: Engine Builder (Phase I)</strong><br>Peak standard run: <strong>${absolutePeakDistance.toFixed(2)} miles</strong>.${waterNote} Target objective is hitting a 3-mile benchmark runtime while keeping daily lean bulk hand-portions maximized.`;
+                responseBox.style.borderLeftColor = "var(--blue-navy)";
+                responseBox.style.backgroundColor = "rgba(31, 111, 235, 0.1)";
+            } else if (absolutePeakDistance >= 3.0 && absolutePeakDistance <= 3.1) {
+                responseBox.innerHTML = `<strong>Operational Rank: Combat Ready Baseline (Phase II) 🎉</strong><br>3-mile structural threshold locked down!${waterNote} Maintain this pace easily or focus heavily on split-second speed drills via high-output Sprints.`;
+                responseBox.style.borderLeftColor = "var(--accent-green)";
+                responseBox.style.backgroundColor = "rgba(35, 134, 54, 0.1)";
+            } else {
+                responseBox.innerHTML = `<strong>Operational Rank: Advanced Apex Runner (Phase III) ⚡</strong><br>Shredding past performance expectations! Peak logged mile split: <strong>${absolutePeakDistance.toFixed(2)} miles</strong>.${waterNote} Metabolic threshold highly active. Fuel cleanly daily to keep your muscle groups protected.`;
+                responseBox.style.borderLeftColor = "var(--gold)";
+                responseBox.style.backgroundColor = "rgba(241, 224, 90, 0.08)";
+            }
+        }
+
+        function persistData() {
+            localStorage.setItem('marineUltimateMasterTrackerDataV8', JSON.stringify(appState));
+        }
+    </script>
+</body>
+</html>
