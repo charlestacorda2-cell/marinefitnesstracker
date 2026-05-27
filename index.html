@@ -125,6 +125,42 @@
             color: #8b949e;
         }
 
+        .btn-action {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 4px 8px;
+            font-size: 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 4px;
+        }
+
+        .btn-action:hover {
+            background-color: var(--border-color);
+            color: var(--text-bright);
+        }
+
+        .btn-danger:hover {
+            background-color: var(--marine-red);
+            border-color: var(--marine-red);
+        }
+
+        .sync-textarea {
+            width: 100%;
+            height: 80px;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            border-radius: 5px;
+            padding: 8px;
+            box-sizing: border-box;
+            font-family: monospace;
+            font-size: 11px;
+            margin-bottom: 10px;
+            resize: vertical;
+        }
+
         .stats-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -291,6 +327,12 @@
 
         .log-table th { background-color: var(--bg-color); }
 
+        .control-cell {
+            white-space: nowrap;
+            text-align: right;
+            width: 70px;
+        }
+
         .badge {
             padding: 2px 6px;
             border-radius: 4px;
@@ -335,6 +377,18 @@
 
         <!-- TAB 1: DASHBOARD STATUS -->
         <div id="dashboard" class="tab-content active">
+            
+            <!-- CROSS-PLATFORM DEVICE SYNC DECK -->
+            <div class="card" style="border: 1px solid var(--blue-navy);">
+                <h3>📱 Cross-Device Data Sync</h3>
+                <p style="color:#8b949e; font-size:12px; margin-top:-5px; margin-bottom:10px;">Move your metrics between iPhone and PC without cloud log-ins.</p>
+                <textarea id="syncDataBox" class="sync-textarea" placeholder="Backup strings generate or paste here..."></textarea>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn" style="flex:1; background-color:var(--blue-navy);" onclick="generateSyncString()">📤 Export Backup</button>
+                    <button class="btn" style="flex:1; background-color:var(--accent-green);" onclick="importSyncString()">📥 Import Backup</button>
+                </div>
+            </div>
+
             <div class="card">
                 <div class="stats-grid">
                     <div class="stat-box">
@@ -384,6 +438,7 @@
                                 <th>Date</th>
                                 <th>Streak State</th>
                                 <th>Checklist Summary</th>
+                                <th style="text-align:right;">Control</th>
                             </tr>
                         </thead>
                         <tbody id="statusLogBody"></tbody>
@@ -432,6 +487,7 @@
                                 <th>Date / Week</th>
                                 <th>Training Target</th>
                                 <th>Completion Volume</th>
+                                <th style="text-align:right;">Control</th>
                             </tr>
                         </thead>
                         <tbody id="workoutLogBody"></tbody>
@@ -490,6 +546,7 @@
                                 <th>Date / Week</th>
                                 <th>Rotation Context</th>
                                 <th>Adherence Level</th>
+                                <th style="text-align:right;">Control</th>
                             </tr>
                         </thead>
                         <tbody id="dietLogBody"></tbody>
@@ -571,6 +628,7 @@
                                 <th>Modality</th>
                                 <th>Volume & Time</th>
                                 <th>Notes</th>
+                                <th style="text-align:right;">Control</th>
                             </tr>
                         </thead>
                         <tbody id="runLogBody"></tbody>
@@ -612,7 +670,7 @@
 
         window.onload = function() {
             populateWeekDropdowns();
-            const dataStored = localStorage.getItem('marineUltimateMasterTrackerDataV9');
+            const dataStored = localStorage.getItem('marineUltimateMasterTrackerDataV10');
             if (dataStored) {
                 appState = JSON.parse(dataStored);
             }
@@ -627,11 +685,13 @@
             const selectors = ['workoutWeek', 'dietWeek', 'runWeek'];
             selectors.forEach(id => {
                 const selectElement = document.getElementById(id);
-                for (let w = 1; w <= 52; w++) {
-                    let opt = document.createElement('option');
-                    opt.value = w;
-                    opt.innerText = `Week ${w}`;
-                    selectElement.appendChild(opt);
+                if (selectElement.children.length === 0) {
+                    for (let w = 1; w <= 52; w++) {
+                        let opt = document.createElement('option');
+                        opt.value = w;
+                        opt.innerText = `Week ${w}`;
+                        selectElement.appendChild(opt);
+                    }
                 }
             });
         }
@@ -642,6 +702,44 @@
             document.getElementById(tabId).classList.add('active');
             if (event && event.currentTarget) {
                 event.currentTarget.classList.add('active');
+            }
+        }
+
+        /* DATA DEVICE SYNC METHODS */
+        function generateSyncString() {
+            const syncString = btoa(unescape(encodeURIComponent(JSON.stringify(appState))));
+            document.getElementById('syncDataBox').value = syncString;
+            document.getElementById('syncDataBox').select();
+            
+            // Native iPhone selection support
+            document.getElementById('syncDataBox').setSelectionRange(0, 99999);
+            navigator.clipboard.writeText(syncString);
+            alert("Backup code built and copied to your clipboard! Paste this code on your other device to synchronize data.");
+        }
+
+        function importSyncString() {
+            const syncString = document.getElementById('syncDataBox').value.trim();
+            if(!syncString) {
+                alert("Please paste a valid data code into the text field first.");
+                return;
+            }
+            try {
+                const parsedJSON = JSON.parse(decodeURIComponent(escape(atob(syncString))));
+                if(parsedJSON && typeof parsedJSON === 'object' && 'streak' in parsedJSON) {
+                    if(confirm("Valid backup found! Overwrite current device history with this file data?")) {
+                        appState = parsedJSON;
+                        persistData();
+                        renderUI();
+                        renderDynamicWorkout();
+                        renderDynamicDiet();
+                        document.getElementById('syncDataBox').value = '';
+                        alert("Sync Complete! Progress successfully imported.");
+                    }
+                } else {
+                    alert("Invalid backup payload structure. Verify the code text string.");
+                }
+            } catch(e) {
+                alert("Failed to decode text string. Make sure you copied the exact, full code.");
             }
         }
 
@@ -672,7 +770,6 @@
             const targetData = masterWorkouts[chosenDay];
             const container = document.getElementById('workoutDisplayContainer');
 
-            // Format layout configurations natively
             let exerciseTemplates = {
                 "1": ["🏋️‍♂️ <strong>Barbell Bench Press:</strong> 4 Sets x 6-8 Reps", "📐 <strong>Incline Dumbbell Press:</strong> 3 Sets x 8-10 Reps", "🦅 <strong>Cable Chest Flies / Pec Dec:</strong> 3 Sets x 12 Reps", "💪 <strong>Tricep Overhead DB Extension:</strong> 3 Sets x 10 Reps", "⚓ <strong>Tricep Cable Rope Pushdowns:</strong> 3 Sets x 12-15 Reps"],
                 "2": ["💀 <strong>Deadlifts or Rack Pulls:</strong> 3 Sets x 5 Reps", "🛶 <strong>Barbell or Dumbbell Rows:</strong> 3 Sets x 8 Reps", "👑 <strong>Lat Pulldowns or Pull-ups:</strong> 4 Sets x 8-10 Reps", "⚡ <strong>Barbell Bicep Curls:</strong> 3 Sets x 8-10 Reps", "🔨 <strong>Dumbbell Hammer Curls:</strong> 3 Sets x 12 Reps"],
@@ -717,6 +814,7 @@
             }
 
             const payload = {
+                id: Date.now() + Math.random(),
                 date: new Date().toLocaleDateString(),
                 weekInfo: `Week ${chosenWeek} (Day ${chosenDay})`,
                 title: targetData.title,
@@ -790,6 +888,7 @@
             }
 
             const payload = {
+                id: Date.now() + Math.random(),
                 date: new Date().toLocaleDateString(),
                 weekInfo: `Week ${chosenWeek} (Day ${chosenDay})`,
                 profile: masterDiets[rotationLetter].title,
@@ -814,6 +913,7 @@
             const summary = activeCheckedText.length > 0 ? activeCheckedText.join(", ") : "No habits verified yet.";
 
             const payload = {
+                id: Date.now() + Math.random(),
                 date: new Date().toLocaleDateString(),
                 streak: `${appState.streak} Active Days`,
                 summary: summary
@@ -873,6 +973,7 @@
             const formattedDuration = `${pad(hrsInput)}:${pad(minInput)}:${pad(secInput)}`;
 
             const inputPayload = {
+                id: Date.now() + Math.random(),
                 timeline: `Week ${currentWeek}`,
                 date: formatLocalDate,
                 type: selectedStyle,
@@ -895,6 +996,42 @@
             renderUI();
         }
 
+        /* IN-LINE HISTORY MANIPULATION CONTROL LOGIC */
+        function editRow(historyArrayName, elementId) {
+            let targetArray = appState[historyArrayName];
+            let targetIndex = targetArray.findIndex(item => item.id === elementId);
+            if(targetIndex === -1) return;
+
+            let rowItem = targetArray[targetIndex];
+
+            if (historyArrayName === 'cardioHistory') {
+                let updatedNotes = prompt("Edit Session Training Notes:", rowItem.notes);
+                if (updatedNotes !== null) {
+                    rowItem.notes = updatedNotes;
+                }
+            } else if (historyArrayName === 'workoutHistory' || historyArrayName === 'dietHistory') {
+                let updatedScore = prompt("Update Checklist Score Performance Volume:", rowItem.score);
+                if (updatedScore !== null) {
+                    rowItem.score = updatedScore;
+                }
+            } else if (historyArrayName === 'statusHistory') {
+                let updatedSummary = prompt("Update Checklist Core Snapshot Summary:", rowItem.summary);
+                if (updatedSummary !== null) {
+                    rowItem.summary = updatedSummary;
+                }
+            }
+            persistData();
+            renderUI();
+        }
+
+        function deleteRow(historyArrayName, elementId) {
+            if(confirm("Permanently archive and delete this specific line entry?")) {
+                appState[historyArrayName] = appState[historyArrayName].filter(item => item.id !== elementId);
+                persistData();
+                renderUI();
+            }
+        }
+
         function renderUI() {
             // Dashboard Calculations
             document.getElementById('streakDisplay').innerText = `${appState.streak} Days`;
@@ -915,34 +1052,68 @@
                 }
             });
 
+            // Ensure all array systems hold validation keys
+            const initializeIds = (arr) => arr.forEach(item => { if(!item.id) item.id = Date.now() + Math.random(); });
+            initializeIds(appState.statusHistory);
+            initializeIds(appState.workoutHistory);
+            initializeIds(appState.dietHistory);
+            initializeIds(appState.cardioHistory);
+
             // 1. Status Snapshot Render
             const statusLogBody = document.getElementById('statusLogBody');
             statusLogBody.innerHTML = appState.statusHistory.length === 0 ? 
-                `<tr><td colspan="3" style="text-align:center; color:#8b949e;">No snapshots archived yet.</td></tr>` : '';
+                `<tr><td colspan="4" style="text-align:center; color:#8b949e;">No snapshots archived yet.</td></tr>` : '';
             appState.statusHistory.forEach(item => {
-                statusLogBody.innerHTML += `<tr><td>${item.date}</td><td><span class="badge badge-generic">${item.streak}</span></td><td>${item.summary}</td></tr>`;
+                statusLogBody.innerHTML += `
+                    <tr>
+                        <td>${item.date}</td>
+                        <td><span class="badge badge-generic">${item.streak}</span></td>
+                        <td>${item.summary}</td>
+                        <td class="control-cell">
+                            <button class="btn-action" onclick="editRow('statusHistory', ${item.id})">✏️</button>
+                            <button class="btn-action btn-danger" onclick="deleteRow('statusHistory', ${item.id})">🗑️</button>
+                        </td>
+                    </tr>`;
             });
 
             // 2. Workout History Render
             const workoutLogBody = document.getElementById('workoutLogBody');
             workoutLogBody.innerHTML = appState.workoutHistory.length === 0 ? 
-                `<tr><td colspan="3" style="text-align:center; color:#8b949e;">No weight logs archived yet.</td></tr>` : '';
+                `<tr><td colspan="4" style="text-align:center; color:#8b949e;">No weight logs archived yet.</td></tr>` : '';
             appState.workoutHistory.forEach(item => {
-                workoutLogBody.innerHTML += `<tr><td><strong>${item.weekInfo}</strong><br><span style="font-size:10px; color:#8b949e;">${item.date}</span></td><td><span class="badge badge-distance">${item.title}</span></td><td><strong>${item.score}</strong></td></tr>`;
+                workoutLogBody.innerHTML += `
+                    <tr>
+                        <td><strong>${item.weekInfo}</strong><br><span style="font-size:10px; color:#8b949e;">${item.date}</span></td>
+                        <td><span class="badge badge-distance">${item.title}</span></td>
+                        <td><strong>${item.score}</strong></td>
+                        <td class="control-cell">
+                            <button class="btn-action" onclick="editRow('workoutHistory', ${item.id})">✏️</button>
+                            <button class="btn-action btn-danger" onclick="deleteRow('workoutHistory', ${item.id})">🗑️</button>
+                        </td>
+                    </tr>`;
             });
 
             // 3. Diet History Render
             const dietLogBody = document.getElementById('dietLogBody');
             dietLogBody.innerHTML = appState.dietHistory.length === 0 ? 
-                `<tr><td colspan="3" style="text-align:center; color:#8b949e;">No dietary sequences logs found.</td></tr>` : '';
+                `<tr><td colspan="4" style="text-align:center; color:#8b949e;">No dietary sequences logs found.</td></tr>` : '';
             appState.dietHistory.forEach(item => {
-                dietLogBody.innerHTML += `<tr><td><strong>${item.weekInfo}</strong><br><span style="font-size:10px; color:#8b949e;">${item.date}</span></td><td><span class="badge badge-generic">${item.profile}</span></td><td><strong>${item.score}</strong></td></tr>`;
+                dietLogBody.innerHTML += `
+                    <tr>
+                        <td><strong>${item.weekInfo}</strong><br><span style="font-size:10px; color:#8b949e;">${item.date}</span></td>
+                        <td><span class="badge badge-generic">${item.profile}</span></td>
+                        <td><strong>${item.score}</strong></td>
+                        <td class="control-cell">
+                            <button class="btn-action" onclick="editRow('dietHistory', ${item.id})">✏️</button>
+                            <button class="btn-action btn-danger" onclick="deleteRow('dietHistory', ${item.id})">🗑️</button>
+                        </td>
+                    </tr>`;
             });
 
             // 4. Cardio History Render
             const logTableBody = document.getElementById('runLogBody');
             logTableBody.innerHTML = appState.cardioHistory.length === 0 ? 
-                `<tr><td colspan="4" style="text-align:center; color:#8b949e;">No conditioning logs found.</td></tr>` : '';
+                `<tr><td colspan="5" style="text-align:center; color:#8b949e;">No conditioning logs found.</td></tr>` : '';
             appState.cardioHistory.forEach(session => {
                 let dynamicBadge = session.type === 'Sprints / HIIT' ? 'badge-sprint' : (session.type === 'Swimming' ? 'badge-swim' : 'badge-distance');
                 logTableBody.innerHTML += `
@@ -951,6 +1122,10 @@
                         <td><span class="badge ${dynamicBadge}">${session.type}</span></td>
                         <td><strong>${session.distance} ${session.unit || 'mi'}</strong><br><span style="font-size:11px; color:#58a6ff; font-family:monospace;">⏱️ ${session.duration || '--:--:--'}</span></td>
                         <td>${session.notes}</td>
+                        <td class="control-cell">
+                            <button class="btn-action" onclick="editRow('cardioHistory', ${session.id})">✏️</button>
+                            <button class="btn-action btn-danger" onclick="deleteRow('cardioHistory', ${session.id})">🗑️</button>
+                        </td>
                     </tr>`;
             });
 
@@ -991,7 +1166,7 @@
         }
 
         function persistData() {
-            localStorage.setItem('marineUltimateMasterTrackerDataV9', JSON.stringify(appState));
+            localStorage.setItem('marineUltimateMasterTrackerDataV10', JSON.stringify(appState));
         }
     </script>
 </body>
